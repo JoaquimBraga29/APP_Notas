@@ -312,6 +312,27 @@
   </div>
 </div>
 
+<!-- Mover Disciplina -->
+<div class="modal-overlay" id="modal-mover-disc">
+  <div class="modal">
+    <h3>Mover Disciplina</h3>
+    <input type="hidden" id="mover-disc-nome" />
+    <input type="hidden" id="mover-disc-sem-origem" />
+    <div class="fg">
+      <label>Disciplina</label>
+      <input id="mover-disc-label" readonly style="opacity:0.6;" />
+    </div>
+    <div class="fg">
+      <label>Mover para o Semestre</label>
+      <select id="mover-disc-sem-destino"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('mover-disc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarMoverDisc()">Mover</button>
+    </div>
+  </div>
+</div>
+
 <!-- Editar Avaliações -->
 <div class="modal-overlay" id="modal-edit-avals">
   <div class="modal" style="max-width:500px;">
@@ -706,9 +727,12 @@ function renderIFBA() {
     if (discsDaEmenta.length > 0) {
       html += '<div style="margin-bottom:14px;">';
       discsDaEmenta.forEach(disc => {
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;margin-bottom:6px;opacity:0.5;">'
-          + '<span style="font-size:0.82rem;">' + disc + '</span>'
-          + '<span class="badge badge-gray">A CURSAR</span>'
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;margin-bottom:6px;">'
+          + '<span style="font-size:0.82rem;color:var(--muted);">' + disc + '</span>'
+          + '<div style="display:flex;gap:8px;align-items:center;">'
+          + '<button class="btn btn-sm" style="font-size:0.65rem;opacity:0.7;" onclick="moverDisc(\'' + esc(sem) + '\',\'' + esc(disc) + '\')">↔ Mover</button>'
+          + '<button class="btn btn-sm btn-primary" style="font-size:0.65rem;" onclick="iniciarDisc(\'' + esc(sem) + '\',\'' + esc(disc) + '\')">+ Iniciar</button>'
+          + '</div>'
           + '</div>';
       });
       html += '</div>';
@@ -878,6 +902,45 @@ function renderSAGA() {
 // ════════════════════════════════════════════════════
 //  COLLAPSE
 // ════════════════════════════════════════════════════
+function iniciarDisc(sem, disc) {
+  // Abre o modal de editar avaliações para uma disciplina nova
+  // Primeiro cria uma avaliação vazia para a disciplina aparecer
+  editCtx = { inst: 'ifba', semestre: sem, disciplina: disc };
+  document.getElementById('edit-avals-title').textContent = 'Avaliações — ' + disc;
+  document.getElementById('save-avals-btn').className = 'btn btn-primary';
+  document.getElementById('avals-col-header').innerHTML = '<span style="display:grid;grid-template-columns:1fr 70px 70px 32px;gap:8px;"><span>NOME</span><span>PESO</span><span>NOTA</span><span></span></span>';
+  document.getElementById('avals-list').innerHTML = avalRowHTML('', 10, null, true, false);
+  openModal('edit-avals');
+}
+
+function moverDisc(sem, disc) {
+  document.getElementById('mover-disc-nome').value = disc;
+  document.getElementById('mover-disc-sem-origem').value = sem;
+  document.getElementById('mover-disc-label').value = disc;
+  const sel = document.getElementById('mover-disc-sem-destino');
+  sel.innerHTML = db.config.ifba_semestres
+    .filter(s => s !== sem)
+    .map(s => '<option value="' + s + '">' + s + '</option>')
+    .join('');
+  openModal('mover-disc');
+}
+
+function confirmarMoverDisc() {
+  const disc    = document.getElementById('mover-disc-nome').value;
+  const origem  = document.getElementById('mover-disc-sem-origem').value;
+  const destino = document.getElementById('mover-disc-sem-destino').value;
+
+  // Atualiza no config
+  const key = origem + '|' + disc;
+  const newKey = destino + '|' + disc;
+  const idx = db.config.ifba_discs.indexOf(key);
+  if (idx !== -1) db.config.ifba_discs[idx] = newKey;
+
+  closeModal('mover-disc');
+  renderIFBA();
+  toast('"' + disc + '" movida para ' + destino);
+}
+
 function toggleSem(uid) {
   const body = document.getElementById('sem-body-' + uid);
   const chevron = document.getElementById('chevron-' + uid);

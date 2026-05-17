@@ -1,1 +1,1014 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notas — IFBA & SAGA</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f13;
+    --surface: #16181f;
+    --surface2: #1e2029;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #6b7080;
+    --ifba: #4ade80;
+    --ifba-dim: #1a3d28;
+    --saga: #f97316;
+    --saga-dim: #3d2210;
+    --danger: #f43f5e;
+    --warn: #fbbf24;
+    --info: #38bdf8;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; }
 
+  /* HEADER */
+  header {
+    padding:20px 28px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; background:var(--bg); z-index:100;
+  }
+  .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; letter-spacing:-0.02em; }
+  .logo span { color:var(--ifba); }
+  .logo em { color:var(--saga); font-style:normal; }
+
+  /* TABS */
+  .tab-bar { display:flex; gap:4px; padding:14px 28px 0; border-bottom:1px solid var(--border); }
+  .tab {
+    padding:9px 18px; border-radius:var(--radius) var(--radius) 0 0;
+    border:1px solid transparent; background:none; color:var(--muted);
+    cursor:pointer; font-family:'Syne',sans-serif; font-weight:600;
+    font-size:0.82rem; letter-spacing:0.05em; text-transform:uppercase; transition:all 0.2s;
+  }
+  .tab:hover { color:var(--text); background:var(--surface); }
+  .tab.active { background:var(--surface); border-color:var(--border); border-bottom-color:var(--surface); color:var(--text); }
+  .tab.ifba.active { color:var(--ifba); }
+  .tab.saga.active { color:var(--saga); }
+
+  /* LAYOUT */
+  main { padding:28px; max-width:1080px; margin:0 auto; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* CARDS */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:14px; }
+  .card-header { display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+  .card-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; }
+  .card-meta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+
+  /* BADGES */
+  .badge { padding:3px 10px; border-radius:999px; font-size:0.68rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; }
+  .badge-green  { background:var(--ifba-dim); color:var(--ifba); }
+  .badge-orange { background:var(--saga-dim); color:var(--saga); }
+  .badge-red    { background:#3d1020; color:var(--danger); }
+  .badge-yellow { background:#3d2e08; color:var(--warn); }
+  .badge-blue   { background:#0c2d3d; color:var(--info); }
+  .badge-gray   { background:var(--surface2); color:var(--muted); }
+
+  /* SCORE */
+  .score-big { font-family:'Syne',sans-serif; font-weight:800; line-height:1; }
+  .score-big.green  { color:var(--ifba); }
+  .score-big.orange { color:var(--saga); }
+  .score-big.red    { color:var(--danger); }
+  .score-big.yellow { color:var(--warn); }
+  .score-big.gray   { color:var(--muted); }
+
+  /* TABLE */
+  .tbl { width:100%; border-collapse:collapse; margin-top:14px; }
+  .tbl th { text-align:left; font-size:0.63rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; padding:6px 8px; border-bottom:1px solid var(--border); }
+  .tbl td { padding:8px; font-size:0.82rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .tbl tr:last-child td { border-bottom:none; }
+  .tbl tr:hover td { background:var(--surface2); }
+
+  /* PROGRESS */
+  .prog-wrap { background:var(--surface2); border-radius:999px; height:5px; flex:1; min-width:60px; }
+  .prog-fill  { height:100%; border-radius:999px; transition:width 0.4s; }
+
+  /* FINAL BOX */
+  .final-box {
+    border-radius:var(--radius); padding:12px 16px; margin-top:14px;
+    display:flex; align-items:center; gap:16px; font-size:0.8rem; flex-wrap:wrap;
+  }
+  .final-box.warn  { background:#3d2e08; border:1px solid var(--warn); }
+  .final-box.green { background:var(--ifba-dim); border:1px solid var(--ifba); }
+  .final-box .fval { font-family:'Syne',sans-serif; font-weight:700; font-size:1.05rem; }
+
+  /* SEMESTRE HEADER */
+  .sem-header { display:flex; align-items:center; gap:12px; margin:28px 0 14px; }
+  .sem-header h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap; }
+  .sem-avg { font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; padding:3px 12px; border-radius:999px; background:var(--surface2); border:1px solid var(--border); }
+  .sem-line { flex:1; height:1px; background:var(--border); }
+
+  /* OVERVIEW GRID */
+  .ov-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+  .stat-label { font-size:0.63rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; }
+
+  /* BUTTONS */
+  .btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:7px 14px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text); cursor:pointer;
+    font-family:'DM Mono',monospace; font-size:0.76rem; transition:all 0.15s;
+  }
+  .btn:hover { background:var(--border); }
+  .btn-primary { background:var(--ifba); color:#000; border-color:var(--ifba); font-weight:600; }
+  .btn-primary:hover { opacity:0.85; }
+  .btn-saga { background:var(--saga); color:#000; border-color:var(--saga); font-weight:600; }
+  .btn-saga:hover { opacity:0.85; }
+  .btn-danger { border-color:var(--danger); color:var(--danger); background:transparent; }
+  .btn-danger:hover { background:#3d1020; }
+  .btn-sm { padding:4px 10px; font-size:0.68rem; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:center; justify-content:center; padding:16px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:26px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; }
+  .modal h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.05rem; margin-bottom:18px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+
+  /* FORM */
+  .fg { margin-bottom:14px; }
+  .fg label { display:block; font-size:0.68rem; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:5px; }
+  .fg input, .fg select {
+    width:100%; padding:9px 12px; background:var(--bg);
+    border:1px solid var(--border); border-radius:8px; color:var(--text);
+    font-family:'DM Mono',monospace; font-size:0.83rem; transition:border-color 0.2s;
+  }
+  .fg input:focus, .fg select:focus { outline:none; border-color:var(--ifba); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  /* AVAL ROWS */
+  .aval-item { display:grid; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+  .aval-item:last-child { border-bottom:none; }
+  .aval-item.ifba-row { grid-template-columns:1fr 70px 70px 32px; }
+  .aval-item.saga-row { grid-template-columns:1fr 70px 32px; }
+  .aval-item.final-row { grid-template-columns:1fr auto 70px; }
+  .aval-item input {
+    padding:6px 8px; background:var(--bg); border:1px solid var(--border);
+    border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:0.76rem; width:100%;
+  }
+  .aval-item input:focus { outline:none; border-color:var(--ifba); }
+
+  /* COLLAPSE */
+  .collapse-body { overflow:hidden; transition:max-height 0.3s ease; max-height:0; }
+  .collapse-body.open { max-height:2000px; }
+  .chevron { transition:transform 0.25s; color:var(--muted); font-size:0.8rem; }
+  .card.expanded .chevron { transform:rotate(180deg); }
+
+  /* LOGIN */
+  #login-screen {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; gap:20px; text-align:center; padding:24px;
+  }
+  #login-screen h1 { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; }
+  #login-screen p { color:var(--muted); font-size:0.82rem; max-width:320px; line-height:1.6; }
+  .pin-input {
+    font-family:'Syne',sans-serif; font-size:2rem; font-weight:700;
+    letter-spacing:0.3em; width:180px; text-align:center;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); color:var(--text); padding:14px;
+    transition:border-color 0.2s;
+  }
+  .pin-input:focus { outline:none; border-color:var(--ifba); }
+  .pin-input.error { border-color:var(--danger); animation:shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  /* TRACK LABEL */
+  .track-label { color:var(--muted); font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; margin:14px 0 8px; }
+
+  /* TOAST */
+  #toast {
+    position:fixed; bottom:20px; right:20px; background:var(--surface2);
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:10px 18px; font-size:0.8rem; z-index:999;
+    opacity:0; transform:translateY(6px); transition:all 0.25s; pointer-events:none;
+  }
+  #toast.show { opacity:1; transform:translateY(0); }
+
+  /* LOADING */
+  #loading-overlay {
+    display:none; position:fixed; inset:0; background:rgba(14,15,19,0.85);
+    z-index:300; align-items:center; justify-content:center; flex-direction:column; gap:14px;
+  }
+  #loading-overlay.show { display:flex; }
+  .spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--ifba); border-radius:50%; animation:spin 0.6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  @media(max-width:600px) {
+    header { padding:14px 16px; }
+    .tab-bar { padding:10px 16px 0; }
+    .tab { padding:7px 10px; font-size:0.72rem; }
+    main { padding:16px; }
+    .ov-grid { grid-template-columns:1fr 1fr; }
+    .form-row { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div style="color:var(--muted); font-size:0.8rem;">Carregando...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div>
+    <div class="logo" style="font-size:2rem; margin-bottom:6px;"><span>IFB</span>A & <em>SAGA</em></div>
+    <div style="color:var(--muted); font-size:0.75rem;">rastreador de notas</div>
+  </div>
+  <p>Digite a senha para acessar.</p>
+  <input type="password" class="pin-input" id="pin-input" maxlength="6" placeholder="••••••" />
+  <button class="btn btn-primary" onclick="doLogin()" style="padding:10px 28px; font-size:0.88rem;">Entrar</button>
+  <div id="login-error" style="color:var(--danger); font-size:0.78rem; min-height:18px;"></div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+
+  <header>
+    <div class="logo"><span>IFB</span>A & <em>SAGA</em></div>
+    <button class="btn btn-sm" onclick="doLogout()">Sair</button>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab active"  onclick="switchTab('overview',this)">Visão Geral</button>
+    <button class="tab ifba"    onclick="switchTab('ifba',this)">IFBA</button>
+    <button class="tab saga"    onclick="switchTab('saga',this)">SAGA</button>
+  </div>
+
+  <main>
+    <div id="page-overview" class="page active"></div>
+    <div id="page-ifba"     class="page"></div>
+    <div id="page-saga"     class="page"></div>
+  </main>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Novo Semestre -->
+<div class="modal-overlay" id="modal-new-sem">
+  <div class="modal">
+    <h3>Novo Semestre — IFBA</h3>
+    <div class="fg"><label>Nome</label><input id="inp-sem-nome" placeholder="ex: Semestre 3" /></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('new-sem')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addSemestre()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nova Disciplina -->
+<div class="modal-overlay" id="modal-new-disc">
+  <div class="modal">
+    <h3>Nova Disciplina — IFBA</h3>
+    <input type="hidden" id="inp-disc-sem" />
+    <div class="fg"><label>Nome</label><input id="inp-disc-nome" placeholder="ex: Motores 3D" /></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('new-disc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addDisciplina()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Novo Módulo SAGA -->
+<div class="modal-overlay" id="modal-new-mod">
+  <div class="modal">
+    <h3>Novo Módulo — SAGA</h3>
+    <div class="fg"><label>Nome</label><input id="inp-mod-nome" placeholder="ex: Art Suite 2" /></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('new-mod')">Cancelar</button>
+      <button class="btn btn-saga" onclick="addModulo()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nova Matéria SAGA -->
+<div class="modal-overlay" id="modal-new-mat">
+  <div class="modal">
+    <h3>Nova Matéria — SAGA</h3>
+    <input type="hidden" id="inp-mat-mod" />
+    <div class="fg"><label>Nome</label><input id="inp-mat-nome" placeholder="ex: Composição de Imagem" /></div>
+    <div class="fg">
+      <label>Track</label>
+      <select id="inp-mat-track">
+        <option>Design Track</option>
+        <option>Video Track</option>
+        <option>3D Track</option>
+        <option>Game Track</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('new-mat')">Cancelar</button>
+      <button class="btn btn-saga" onclick="addMateria()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Editar Avaliações -->
+<div class="modal-overlay" id="modal-edit-avals">
+  <div class="modal" style="max-width:500px;">
+    <h3 id="edit-avals-title">Avaliações</h3>
+    <div id="avals-col-header" style="font-size:0.63rem; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; padding:0 2px 6px; border-bottom:1px solid var(--border);"></div>
+    <div id="avals-list"></div>
+    <button class="btn btn-sm" style="margin-top:12px;" onclick="addAvalRow()">+ Avaliação</button>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('edit-avals')">Cancelar</button>
+      <button class="btn btn-primary" id="save-avals-btn" onclick="saveAvals()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG — substitua a URL abaixo após o deploy
+// ════════════════════════════════════════════════════
+const API_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+const SENHA   = '290896';
+
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let db = {
+  notas:  [],   // { inst, semestre, disciplina, avaliacao, peso, nota }
+  config: {
+    ifba_semestres: [],
+    saga_modulos:   [],
+    saga_materias:  []  // "modulo|track|nome"
+  }
+};
+let editCtx = {};
+
+// ════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════
+document.getElementById('pin-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogin() {
+  const val = document.getElementById('pin-input').value.trim();
+  if (val === SENHA) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAll();
+  } else {
+    const inp = document.getElementById('pin-input');
+    inp.classList.add('error');
+    document.getElementById('login-error').textContent = 'Senha incorreta.';
+    setTimeout(() => { inp.classList.remove('error'); inp.value = ''; }, 800);
+  }
+}
+
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pin-input').value = '';
+}
+
+// ════════════════════════════════════════════════════
+//  API
+// ════════════════════════════════════════════════════
+async function apiGet(aba) {
+  const url = `${API_URL}?senha=${SENHA}&aba=${aba}`;
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function apiPost(body) {
+  const r = await fetch(API_URL + '?senha=' + SENHA, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...body })
+  });
+  return r.json();
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD
+// ════════════════════════════════════════════════════
+async function loadAll() {
+  loading(true);
+  try {
+    const [rNotas, rConfig] = await Promise.all([apiGet('_notas'), apiGet('_config')]);
+
+    // Parse notas
+    db.notas = [];
+    const rows = rNotas.values || [];
+    rows.slice(1).forEach(r => {
+      if (!r[0]) return;
+      db.notas.push({
+        inst: r[0], semestre: r[1], disciplina: r[2],
+        avaliacao: r[3],
+        peso: parseFloat(r[4]) || 1,
+        nota: (r[5] === '' || r[5] == null) ? null : parseFloat(r[5])
+      });
+    });
+
+    // Parse config
+    db.config = { ifba_semestres: [], saga_modulos: [], saga_materias: [] };
+    const cfgRows = rConfig.values || [];
+    cfgRows.slice(1).forEach(r => {
+      if (r[0] === 'ifba_semestre') db.config.ifba_semestres.push(r[1]);
+      if (r[0] === 'saga_modulo')   db.config.saga_modulos.push(r[1]);
+      if (r[0] === 'saga_materia')  db.config.saga_materias.push(r[1]);
+    });
+
+    renderAll();
+  } catch(e) {
+    toast('Erro ao carregar: ' + e.message, true);
+  }
+  loading(false);
+}
+
+// ════════════════════════════════════════════════════
+//  SAVE
+// ════════════════════════════════════════════════════
+async function saveNotas() {
+  const header = ['inst','semestre','disciplina','avaliacao','peso','nota'];
+  const rows = db.notas.map(r => [r.inst, r.semestre, r.disciplina, r.avaliacao, r.peso, r.nota ?? '']);
+  await apiPost({ action: 'saveNotas', rows: [header, ...rows] });
+}
+
+async function saveConfig() {
+  const header = ['tipo','valor'];
+  const rows = [
+    ...db.config.ifba_semestres.map(s => ['ifba_semestre', s]),
+    ...db.config.saga_modulos.map(m   => ['saga_modulo', m]),
+    ...db.config.saga_materias.map(m  => ['saga_materia', m]),
+  ];
+  await apiPost({ action: 'saveConfig', rows: [header, ...rows] });
+}
+
+// ════════════════════════════════════════════════════
+//  CALC
+// ════════════════════════════════════════════════════
+function calcIFBA(rows) {
+  const regular = rows.filter(r => r.avaliacao?.toUpperCase() !== 'FINAL');
+  const finalRow = rows.find(r => r.avaliacao?.toUpperCase() === 'FINAL');
+  const comNota  = regular.filter(r => r.nota !== null);
+
+  if (comNota.length === 0) return { media:null, mediaFinal:null, status:'CURSANDO', precisaFinal:null, notaFinal:null };
+
+  const totalPeso = comNota.reduce((s,r) => s + r.peso, 0);
+  const media     = totalPeso === 0 ? 0 : comNota.reduce((s,r) => s + r.nota * r.peso, 0) / totalPeso;
+
+  let status, mediaFinal = null, precisaFinal = null, notaFinal = null;
+
+  if (finalRow) {
+    notaFinal     = finalRow.nota;
+    precisaFinal  = Math.max(0, 15 - 2 * media);
+    if (notaFinal !== null) {
+      mediaFinal = (media + notaFinal) / 2;
+      status = mediaFinal >= 5 ? 'APROVADO NA FINAL' : 'REPROVADO';
+    } else {
+      status = 'EM FINAL';
+    }
+  } else if (media >= 7) {
+    status     = 'APROVADO';
+    mediaFinal = media;
+  } else if (media >= 5) {
+    status       = 'EM FINAL';
+    precisaFinal = Math.max(0, 15 - 2 * media);
+  } else {
+    status = 'REPROVADO';
+  }
+
+  return { media, mediaFinal: mediaFinal ?? media, status, precisaFinal, notaFinal };
+}
+
+function calcSAGA(rows) {
+  const comNota = rows.filter(r => r.nota !== null);
+  if (comNota.length === 0) return { media:null, status:'CURSANDO' };
+  const media = comNota.reduce((s,r) => s+r.nota, 0) / comNota.length;
+  return { media, status: media >= 7 ? 'APROVADO' : 'REPROVADO' };
+}
+
+function scoreColor(v) {
+  if (v === null) return 'gray';
+  if (v >= 7) return 'green';
+  if (v >= 5) return 'yellow';
+  return 'red';
+}
+
+function fmt(v) {
+  if (v === null || v === undefined) return '—';
+  return v.toFixed(2).replace('.', ',');
+}
+
+function statusBadge(s) {
+  const map = {
+    'APROVADO':         'badge-green',
+    'APROVADO NA FINAL':'badge-blue',
+    'EM FINAL':         'badge-yellow',
+    'REPROVADO':        'badge-red',
+    'CURSANDO':         'badge-gray',
+  };
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════
+function renderAll() { renderOverview(); renderIFBA(); renderSAGA(); }
+
+// ── OVERVIEW ──────────────────────────────────────────
+function renderOverview() {
+  const all = [];
+
+  db.config.ifba_semestres.forEach(sem => {
+    [...new Set(db.notas.filter(r => r.inst==='IFBA' && r.semestre===sem).map(r => r.disciplina))].forEach(disc => {
+      const rows = db.notas.filter(r => r.inst==='IFBA' && r.semestre===sem && r.disciplina===disc);
+      all.push({ inst:'IFBA', sem, disc, calc: calcIFBA(rows) });
+    });
+  });
+
+  db.config.saga_materias.forEach(ms => {
+    const [mod,,nome] = ms.split('|');
+    const rows = db.notas.filter(r => r.inst==='SAGA' && r.semestre===mod && r.disciplina===nome);
+    all.push({ inst:'SAGA', sem:mod, disc:nome, calc: calcSAGA(rows) });
+  });
+
+  const aprovadas = all.filter(d => ['APROVADO','APROVADO NA FINAL'].includes(d.calc.status)).length;
+  const cursando  = all.filter(d => d.calc.status==='CURSANDO').length;
+  const emFinal   = all.filter(d => d.calc.status==='EM FINAL').length;
+  const reprovado = all.filter(d => d.calc.status==='REPROVADO').length;
+
+  const avgOf = arr => arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null;
+  const mediaGeral = avgOf(all.filter(d=>d.calc.mediaFinal!==null).map(d=>d.calc.mediaFinal??d.calc.media));
+  const mediaIFBA  = avgOf(all.filter(d=>d.inst==='IFBA'&&d.calc.mediaFinal!==null).map(d=>d.calc.mediaFinal));
+  const mediaSAGA  = avgOf(all.filter(d=>d.inst==='SAGA'&&d.calc.media!==null).map(d=>d.calc.media));
+
+  let html = `<div class="ov-grid">
+    <div class="stat-card">
+      <div class="stat-label">Média Geral</div>
+      <div class="score-big ${scoreColor(mediaGeral)}" style="font-size:2.2rem;">${fmt(mediaGeral)}</div>
+      <div style="color:var(--muted);font-size:0.68rem;margin-top:4px;">${all.filter(d=>d.calc.mediaFinal!==null||d.calc.media!==null).length} disciplinas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Média IFBA</div>
+      <div class="score-big" style="font-size:2.2rem;color:var(--ifba);">${fmt(mediaIFBA)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Média SAGA</div>
+      <div class="score-big" style="font-size:2.2rem;color:var(--saga);">${fmt(mediaSAGA)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Aprovadas</div>
+      <div class="score-big green" style="font-size:2.2rem;">${aprovadas}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cursando</div>
+      <div class="score-big gray" style="font-size:2.2rem;">${cursando}</div>
+    </div>
+    ${emFinal   ? `<div class="stat-card"><div class="stat-label">Em Final</div><div class="score-big yellow" style="font-size:2.2rem;">${emFinal}</div></div>` : ''}
+    ${reprovado ? `<div class="stat-card"><div class="stat-label">Reprovadas</div><div class="score-big red" style="font-size:2.2rem;">${reprovado}</div></div>` : ''}
+  </div>`;
+
+  html += `<div class="card"><table class="tbl"><thead><tr>
+    <th>Inst.</th><th>Semestre / Módulo</th><th>Disciplina</th><th>Média</th><th>Status</th>
+  </tr></thead><tbody>`;
+
+  all.forEach(d => {
+    const mv = d.inst==='IFBA' ? d.calc.mediaFinal : d.calc.media;
+    html += `<tr>
+      <td><span style="color:${d.inst==='IFBA'?'var(--ifba)':'var(--saga)'};font-weight:600;">${d.inst}</span></td>
+      <td style="color:var(--muted)">${d.sem}</td>
+      <td>${d.disc}</td>
+      <td><span class="score-big ${scoreColor(mv)}" style="font-size:1rem;">${fmt(mv)}</span></td>
+      <td>${statusBadge(d.calc.status)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  document.getElementById('page-overview').innerHTML = html;
+}
+
+// ── IFBA ──────────────────────────────────────────────
+function renderIFBA() {
+  const el = document.getElementById('page-ifba');
+
+  if (db.config.ifba_semestres.length === 0) {
+    el.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+      <button class="btn btn-primary" onclick="openModal('new-sem')">+ Semestre</button></div>
+      <div style="text-align:center;padding:48px;color:var(--muted);">Nenhum semestre ainda.</div>`;
+    return;
+  }
+
+  let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+    <button class="btn btn-primary" onclick="openModal('new-sem')">+ Semestre</button></div>`;
+
+  db.config.ifba_semestres.forEach((sem, si) => {
+    const discNames = [...new Set(db.notas.filter(r=>r.inst==='IFBA'&&r.semestre===sem).map(r=>r.disciplina))];
+    const semCalcs  = discNames.map(d => calcIFBA(db.notas.filter(r=>r.inst==='IFBA'&&r.semestre===sem&&r.disciplina===d)));
+    const semMedia  = semCalcs.filter(c=>c.mediaFinal!==null).length
+      ? semCalcs.filter(c=>c.mediaFinal!==null).reduce((s,c)=>s+c.mediaFinal,0) / semCalcs.filter(c=>c.mediaFinal!==null).length
+      : null;
+
+    const semColor = semMedia===null ? 'var(--muted)' : semMedia>=7 ? 'var(--ifba)' : semMedia>=5 ? 'var(--warn)' : 'var(--danger)';
+
+    html += `<div class="sem-header">
+      <h2>${sem}</h2>
+      ${semMedia!==null?`<div class="sem-avg" style="color:${semColor}">${fmt(semMedia)}</div>`:''}
+      <div class="sem-line"></div>
+      <button class="btn btn-sm btn-primary" onclick="openAddDisc('${esc(sem)}')">+ Disciplina</button>
+    </div>`;
+
+    if (discNames.length === 0) {
+      html += `<div style="color:var(--muted);font-size:0.8rem;padding:12px 0;">Nenhuma disciplina.</div>`;
+    }
+
+    discNames.forEach((disc, di) => {
+      const rows   = db.notas.filter(r=>r.inst==='IFBA'&&r.semestre===sem&&r.disciplina===disc);
+      const regular = rows.filter(r=>r.avaliacao?.toUpperCase()!=='FINAL');
+      const calc   = calcIFBA(rows);
+      const color  = scoreColor(calc.mediaFinal);
+      const uid    = `c${si}_${di}`;
+
+      html += `<div class="card" id="card-${uid}">
+        <div class="card-header" onclick="toggleCard('${uid}')">
+          <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+            <div class="score-big ${color}" style="font-size:1.5rem;min-width:52px;">${fmt(calc.mediaFinal)}</div>
+            <div style="min-width:0;">
+              <div class="card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${disc}</div>
+              <div class="card-meta">${sem} · ${rows.length} avaliação${rows.length!==1?'s':''}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+            ${statusBadge(calc.status)}
+            <span class="chevron">▾</span>
+          </div>
+        </div>
+        <div class="collapse-body" id="body-${uid}">
+          <table class="tbl"><thead><tr>
+            <th>Avaliação</th><th>Peso</th><th>Nota</th><th>Barra</th>
+          </tr></thead><tbody>`;
+
+      regular.forEach(r => {
+        const pct = r.nota!==null ? r.nota/10*100 : 0;
+        const bc  = r.nota===null?'#333':r.nota>=7?'var(--ifba)':r.nota>=5?'var(--warn)':'var(--danger)';
+        html += `<tr>
+          <td>${r.avaliacao}</td>
+          <td style="color:var(--muted)">${r.peso}</td>
+          <td><strong>${fmt(r.nota)}</strong></td>
+          <td><div style="display:flex;align-items:center;gap:6px;">
+            <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${bc};"></div></div>
+            <span style="font-size:0.68rem;color:var(--muted);min-width:28px;">${r.nota!==null?Math.round(pct)+'%':''}</span>
+          </div></td>
+        </tr>`;
+      });
+
+      html += `</tbody></table>`;
+
+      if (calc.status === 'EM FINAL') {
+        html += `<div class="final-box warn">
+          <span>📋</span>
+          <div><div style="color:var(--warn);font-size:0.72rem;font-weight:600;">EM FINAL</div>
+          <div style="margin-top:2px;">Precisa de <span class="fval" style="color:var(--warn);">${fmt(calc.precisaFinal)}</span></div></div>
+          <div style="color:var(--muted);font-size:0.72rem;">PF = 15 − (2 × ${fmt(calc.media)})</div>
+        </div>`;
+      } else if (calc.status === 'APROVADO NA FINAL') {
+        html += `<div class="final-box green">
+          <span>✅</span>
+          <div><div style="color:var(--ifba);font-size:0.72rem;font-weight:600;">APROVADO NA FINAL</div>
+          <div style="margin-top:2px;">Final: <span class="fval" style="color:var(--ifba);">${fmt(calc.notaFinal)}</span> · Média Final: <span style="font-weight:700;">${fmt(calc.mediaFinal)}</span></div></div>
+        </div>`;
+      }
+
+      html += `<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-sm btn-danger" onclick="deleteDisc('${esc(sem)}','${esc(disc)}')">Excluir</button>
+        <button class="btn btn-sm" onclick="openEditAvals('ifba','${esc(sem)}','${esc(disc)}')">✏️ Editar avaliações</button>
+      </div></div></div>`;
+    });
+  });
+
+  el.innerHTML = html;
+}
+
+// ── SAGA ──────────────────────────────────────────────
+function renderSAGA() {
+  const el = document.getElementById('page-saga');
+
+  if (db.config.saga_modulos.length === 0) {
+    el.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+      <button class="btn btn-saga" onclick="openModal('new-mod')">+ Módulo</button></div>
+      <div style="text-align:center;padding:48px;color:var(--muted);">Nenhum módulo ainda.</div>`;
+    return;
+  }
+
+  let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+    <button class="btn btn-saga" onclick="openModal('new-mod')">+ Módulo</button></div>`;
+
+  db.config.saga_modulos.forEach((mod, mi) => {
+    const materias = db.config.saga_materias.filter(m=>m.startsWith(mod+'|'))
+      .map(m => { const [,track,nome]=m.split('|'); return {track,nome}; });
+    const tracks = [...new Set(materias.map(m=>m.track))];
+
+    const modCalcs = materias.map(mat => calcSAGA(db.notas.filter(r=>r.inst==='SAGA'&&r.semestre===mod&&r.disciplina===mat.nome)));
+    const modMedia = modCalcs.filter(c=>c.media!==null).length
+      ? modCalcs.filter(c=>c.media!==null).reduce((s,c)=>s+c.media,0)/modCalcs.filter(c=>c.media!==null).length
+      : null;
+
+    html += `<div class="sem-header">
+      <h2>${mod}</h2>
+      ${modMedia!==null?`<div class="sem-avg" style="color:var(--saga);">${fmt(modMedia)}</div>`:''}
+      <div class="sem-line"></div>
+      <button class="btn btn-sm btn-saga" onclick="openAddMat('${esc(mod)}')">+ Matéria</button>
+    </div>`;
+
+    if (materias.length === 0) {
+      html += `<div style="color:var(--muted);font-size:0.8rem;padding:12px 0;">Nenhuma matéria.</div>`;
+    }
+
+    tracks.forEach(track => {
+      html += `<div class="track-label">${track}</div>`;
+      materias.filter(m=>m.track===track).forEach((mat, di) => {
+        const rows = db.notas.filter(r=>r.inst==='SAGA'&&r.semestre===mod&&r.disciplina===mat.nome);
+        const calc = calcSAGA(rows);
+        const color = scoreColor(calc.media);
+        const sagaColor = calc.media===null?'var(--muted)':calc.media>=7?'var(--saga)':calc.media>=5?'var(--warn)':'var(--danger)';
+        const uid  = `s${mi}_${track.replace(/\s/g,'')}_${di}`;
+
+        html += `<div class="card" id="card-${uid}" style="margin-bottom:10px;">
+          <div class="card-header" onclick="toggleCard('${uid}')">
+            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+              <div class="score-big" style="font-size:1.5rem;min-width:52px;color:${sagaColor};">${fmt(calc.media)}</div>
+              <div style="min-width:0;">
+                <div class="card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mat.nome}</div>
+                <div class="card-meta">${rows.length} nota${rows.length!==1?'s':''}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+              ${statusBadge(calc.status)}
+              <span class="chevron">▾</span>
+            </div>
+          </div>
+          <div class="collapse-body" id="body-${uid}">
+            <table class="tbl"><thead><tr><th>Avaliação</th><th>Nota</th><th>Barra</th></tr></thead><tbody>`;
+
+        rows.forEach(r => {
+          const pct = r.nota!==null?r.nota/10*100:0;
+          const bc  = r.nota===null?'#333':r.nota>=7?'var(--saga)':r.nota>=5?'var(--warn)':'var(--danger)';
+          html += `<tr>
+            <td>${r.avaliacao}</td>
+            <td><strong>${fmt(r.nota)}</strong></td>
+            <td><div style="display:flex;align-items:center;gap:6px;">
+              <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${bc};"></div></div>
+              <span style="font-size:0.68rem;color:var(--muted);min-width:28px;">${r.nota!==null?Math.round(pct)+'%':''}</span>
+            </div></td>
+          </tr>`;
+        });
+
+        html += `</tbody></table>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+            <button class="btn btn-sm btn-danger" onclick="deleteMat('${esc(mod)}','${esc(mat.track)}','${esc(mat.nome)}')">Excluir</button>
+            <button class="btn btn-sm" onclick="openEditAvals('saga','${esc(mod)}','${esc(mat.nome)}')">✏️ Editar avaliações</button>
+          </div>
+          </div></div>`;
+      });
+    });
+  });
+
+  el.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════
+//  COLLAPSE
+// ════════════════════════════════════════════════════
+function toggleCard(uid) {
+  const card = document.getElementById('card-' + uid);
+  const body = document.getElementById('body-' + uid);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  card.classList.toggle('expanded', !isOpen);
+}
+
+// ════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════
+//  MODALS
+// ════════════════════════════════════════════════════
+function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════════════════
+//  ACTIONS — IFBA
+// ════════════════════════════════════════════════════
+async function addSemestre() {
+  const nome = document.getElementById('inp-sem-nome').value.trim();
+  if (!nome) return;
+  db.config.ifba_semestres.push(nome);
+  loading(true);
+  await saveConfig();
+  loading(false);
+  closeModal('new-sem');
+  document.getElementById('inp-sem-nome').value = '';
+  renderIFBA();
+  toast('Semestre "' + nome + '" criado!');
+}
+
+function openAddDisc(sem) {
+  document.getElementById('inp-disc-sem').value = sem;
+  document.getElementById('inp-disc-nome').value = '';
+  openModal('new-disc');
+}
+
+async function addDisciplina() {
+  const sem  = document.getElementById('inp-disc-sem').value;
+  const nome = document.getElementById('inp-disc-nome').value.trim().toUpperCase();
+  if (!nome) return;
+  closeModal('new-disc');
+  renderIFBA();
+  toast('"' + nome + '" adicionada!');
+}
+
+async function deleteDisc(sem, disc) {
+  if (!confirm(`Excluir "${disc}" e todas as suas notas?`)) return;
+  db.notas = db.notas.filter(r => !(r.inst==='IFBA' && r.semestre===sem && r.disciplina===disc));
+  loading(true);
+  await saveNotas();
+  loading(false);
+  renderAll();
+  toast('Disciplina excluída.');
+}
+
+// ════════════════════════════════════════════════════
+//  ACTIONS — SAGA
+// ════════════════════════════════════════════════════
+async function addModulo() {
+  const nome = document.getElementById('inp-mod-nome').value.trim();
+  if (!nome) return;
+  db.config.saga_modulos.push(nome);
+  loading(true);
+  await saveConfig();
+  loading(false);
+  closeModal('new-mod');
+  document.getElementById('inp-mod-nome').value = '';
+  renderSAGA();
+  toast('Módulo "' + nome + '" criado!');
+}
+
+function openAddMat(mod) {
+  document.getElementById('inp-mat-mod').value = mod;
+  document.getElementById('inp-mat-nome').value = '';
+  openModal('new-mat');
+}
+
+async function addMateria() {
+  const mod   = document.getElementById('inp-mat-mod').value;
+  const nome  = document.getElementById('inp-mat-nome').value.trim().toUpperCase();
+  const track = document.getElementById('inp-mat-track').value;
+  if (!nome) return;
+  db.config.saga_materias.push(`${mod}|${track}|${nome}`);
+  loading(true);
+  await saveConfig();
+  loading(false);
+  closeModal('new-mat');
+  renderSAGA();
+  toast('"' + nome + '" adicionada!');
+}
+
+async function deleteMat(mod, track, nome) {
+  if (!confirm(`Excluir "${nome}" e todas as suas notas?`)) return;
+  db.notas = db.notas.filter(r => !(r.inst==='SAGA' && r.semestre===mod && r.disciplina===nome));
+  db.config.saga_materias = db.config.saga_materias.filter(m => m !== `${mod}|${track}|${nome}`);
+  loading(true);
+  await Promise.all([saveNotas(), saveConfig()]);
+  loading(false);
+  renderAll();
+  toast('Matéria excluída.');
+}
+
+// ════════════════════════════════════════════════════
+//  EDITAR AVALIAÇÕES
+// ════════════════════════════════════════════════════
+function openEditAvals(inst, semestre, disciplina) {
+  editCtx = { inst, semestre, disciplina };
+  const isIFBA = inst === 'ifba';
+
+  document.getElementById('edit-avals-title').textContent = `Avaliações — ${disciplina}`;
+  document.getElementById('save-avals-btn').className = isIFBA ? 'btn btn-primary' : 'btn btn-saga';
+  document.getElementById('avals-col-header').innerHTML = isIFBA
+    ? '<span style="display:grid;grid-template-columns:1fr 70px 70px 32px;gap:8px;"><span>NOME</span><span>PESO</span><span>NOTA</span><span></span></span>'
+    : '<span style="display:grid;grid-template-columns:1fr 70px 32px;gap:8px;"><span>NOME</span><span>NOTA</span><span></span></span>';
+
+  const src     = isIFBA ? db.notas.filter(r=>r.inst==='IFBA') : db.notas.filter(r=>r.inst==='SAGA');
+  const rows    = src.filter(r=>r.semestre===semestre && r.disciplina===disciplina);
+  const regular = isIFBA ? rows.filter(r=>r.avaliacao?.toUpperCase()!=='FINAL') : rows;
+  const finalRow = isIFBA ? rows.find(r=>r.avaliacao?.toUpperCase()==='FINAL') : null;
+
+  let html = '';
+  regular.forEach(r => { html += avalRowHTML(r.avaliacao, r.peso, r.nota, isIFBA, false); });
+  if (finalRow) {
+    html += `<div style="height:1px;background:var(--warn);margin:10px 0;opacity:0.5;"></div>`;
+    html += avalRowHTML('FINAL', 0, finalRow.nota, true, true);
+  }
+
+  document.getElementById('avals-list').innerHTML = html;
+  openModal('edit-avals');
+}
+
+function avalRowHTML(nome, peso, nota, isIFBA, isFinal) {
+  const nv = nota !== null && nota !== undefined ? nota : '';
+  if (isFinal) {
+    return `<div class="aval-item final-row" data-final="true">
+      <input type="text" value="FINAL" readonly style="color:var(--warn);opacity:0.8;" />
+      <span style="color:var(--warn);font-size:0.7rem;white-space:nowrap;text-align:center;">PROVA FINAL</span>
+      <input type="number" placeholder="—" value="${nv}" min="0" max="10" step="0.1" />
+    </div>`;
+  }
+  if (isIFBA) {
+    return `<div class="aval-item ifba-row">
+      <input type="text" placeholder="Nome da avaliação" value="${nome||''}" />
+      <input type="number" placeholder="Peso" value="${peso||10}" min="0" max="100" step="0.5" />
+      <input type="number" placeholder="—" value="${nv}" min="0" max="10" step="0.1" />
+      <button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="this.closest('.aval-item').remove()">✕</button>
+    </div>`;
+  }
+  return `<div class="aval-item saga-row">
+    <input type="text" placeholder="Nome da avaliação" value="${nome||''}" />
+    <input type="number" placeholder="—" value="${nv}" min="0" max="10" step="0.1" />
+    <button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="this.closest('.aval-item').remove()">✕</button>
+  </div>`;
+}
+
+function addAvalRow() {
+  const isIFBA = editCtx.inst === 'ifba';
+  const div = document.createElement('div');
+  div.innerHTML = avalRowHTML('', 10, null, isIFBA, false);
+  document.getElementById('avals-list').appendChild(div.firstChild);
+}
+
+async function saveAvals() {
+  const { inst, semestre, disciplina } = editCtx;
+  const isIFBA = inst === 'ifba';
+  const instKey = isIFBA ? 'IFBA' : 'SAGA';
+
+  // Remove old
+  db.notas = db.notas.filter(r => !(r.inst===instKey && r.semestre===semestre && r.disciplina===disciplina));
+
+  // Read modal
+  document.querySelectorAll('#avals-list .aval-item').forEach(item => {
+    const inputs  = [...item.querySelectorAll('input')];
+    const isFinal = item.dataset.final === 'true';
+
+    if (isIFBA) {
+      const nome  = isFinal ? 'FINAL' : inputs[0]?.value.trim();
+      const peso  = isFinal ? 0 : parseFloat(inputs[1]?.value) || 10;
+      const notaV = isFinal ? inputs[2]?.value : inputs[2]?.value;
+      if (!nome) return;
+      db.notas.push({ inst:'IFBA', semestre, disciplina, avaliacao:nome, peso, nota: notaV===''||notaV==null ? null : parseFloat(notaV) });
+    } else {
+      const nome  = inputs[0]?.value.trim();
+      const notaV = inputs[1]?.value;
+      if (!nome) return;
+      db.notas.push({ inst:'SAGA', semestre, disciplina, avaliacao:nome, peso:1, nota: notaV===''||notaV==null ? null : parseFloat(notaV) });
+    }
+  });
+
+  loading(true);
+  await saveNotas();
+  loading(false);
+  closeModal('edit-avals');
+  renderAll();
+  toast('Notas salvas! ✓');
+}
+
+// ════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════
+function esc(s) { return (s||'').replace(/'/g, "\\'"); }
+
+function loading(on) {
+  document.getElementById('loading-overlay').classList.toggle('show', on);
+}
+
+let toastT;
+function toast(msg, err=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = err ? 'var(--danger)' : 'var(--ifba)';
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

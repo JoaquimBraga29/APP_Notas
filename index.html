@@ -596,26 +596,24 @@ function renderOverview() {
     const media   = medias.length ? medias.reduce((a,b)=>a+b,0)/medias.length : null;
     const mc      = media===null?'var(--muted)':media>=7?cor:media>=5?'var(--warn)':'var(--danger)';
 
-    return `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-        <div>
-          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:${cor};">${label}</div>
-          <div style="color:var(--muted);font-size:0.7rem;margin-top:2px;">${total} disciplinas</div>
-        </div>
-        <div class="score-big" style="font-size:2.4rem;color:${mc};">${fmt(media)}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <div class="prog-wrap" style="height:8px;">
-          <div class="prog-fill" style="width:${pct}%;background:${cor};"></div>
-        </div>
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;color:${cor};min-width:36px;">${pct}%</span>
-      </div>
-      <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;margin-bottom:16px;">
-        <span style="color:${cor};">● ${aprov} aprovadas</span>
-        <span style="color:var(--muted);">● ${cursando} cursando</span>
-        ${emFinal ? `<span style="color:var(--warn);">● ${emFinal} em final</span>` : ''}
-        ${reprov  ? `<span style="color:var(--danger);">● ${reprov} reprovadas</span>` : ''}
-      </div>`;
+    let html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">'
+      + '<div>'
+      + '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:' + cor + ';">' + label + '</div>'
+      + '<div style="color:var(--muted);font-size:0.7rem;margin-top:2px;">' + total + ' disciplinas</div>'
+      + '</div>'
+      + '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:2.4rem;color:' + mc + ';">' + fmt(media) + '</div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+      + '<div class="prog-wrap" style="height:8px;"><div class="prog-fill" style="width:' + pct + '%;background:' + cor + ';"></div></div>'
+      + '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.9rem;color:' + cor + ';min-width:36px;">' + pct + '%</span>'
+      + '</div>'
+      + '<div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;margin-bottom:16px;">'
+      + '<span style="color:' + cor + ';">● ' + aprov + ' aprovadas</span>'
+      + '<span style="color:var(--muted);">● ' + cursando + ' cursando</span>'
+      + (emFinal ? '<span style="color:var(--warn);">● ' + emFinal + ' em final</span>' : '')
+      + (reprov  ? '<span style="color:var(--danger);">● ' + reprov + ' reprovadas</span>' : '')
+      + '</div>';
+    return html;
   }
 
   function semCards(arr, cor, groupKey) {
@@ -629,23 +627,22 @@ function renderOverview() {
       const medias = discs.filter(d=>(d.calc.mediaFinal??d.calc.media)!==null).map(d=>d.calc.mediaFinal??d.calc.media);
       const med = medias.length ? medias.reduce((a,b)=>a+b,0)/medias.length : null;
       const mc  = med===null?'var(--muted)':med>=7?cor:med>=5?'var(--warn)':'var(--danger)';
-      h += `<div style="margin-bottom:10px;background:var(--surface2);border-radius:10px;padding:12px 14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;">${nome}</span>
-          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:${mc};">${fmt(med)}</span>
-        </div>`;
+      h += '<div style="margin-bottom:10px;background:var(--surface2);border-radius:10px;padding:12px 14px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+        + '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.82rem;">' + nome + '</span>'
+        + '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:' + mc + ';">' + fmt(med) + '</span>'
+        + '</div>';
       discs.forEach(d => {
         const mv = d.calc.mediaFinal ?? d.calc.media;
         const dc = mv===null?'var(--muted)':mv>=7?cor:mv>=5?'var(--warn)':'var(--danger)';
-        h += `<div style="display:flex;justify-content:space-between;font-size:0.7rem;padding:3px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">${d.disc}</span>
-          <span style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-            <span style="color:${dc};font-weight:600;">${fmt(mv)}</span>
-            ${statusBadge(d.calc.status)}
-          </span>
-        </div>`;
+        h += '<div style="display:flex;justify-content:space-between;font-size:0.7rem;padding:3px 0;border-bottom:1px solid var(--border);">'
+          + '<span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">' + d.disc + '</span>'
+          + '<span style="display:flex;gap:6px;align-items:center;flex-shrink:0;">'
+          + '<span style="color:' + dc + ';font-weight:600;">' + fmt(mv) + '</span>'
+          + statusBadge(d.calc.status)
+          + '</span></div>';
       });
-      h += `</div>`;
+      h += '</div>';
     });
     return h;
   }

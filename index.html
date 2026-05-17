@@ -569,113 +569,116 @@ function renderAll() { renderOverview(); renderIFBA(); renderSAGA(); }
 
 // ── OVERVIEW ──────────────────────────────────────────
 function renderOverview() {
-  const all = [];
+  const allIFBA = [];
+  const allSAGA = [];
 
   db.config.ifba_semestres.forEach(sem => {
-    [...new Set(db.notas.filter(r => r.inst==='IFBA' && r.semestre===sem).map(r => r.disciplina))].forEach(disc => {
-      const rows = db.notas.filter(r => r.inst==='IFBA' && r.semestre===sem && r.disciplina===disc);
-      all.push({ inst:'IFBA', sem, disc, calc: calcIFBA(rows) });
+    [...new Set(db.notas.filter(r=>r.inst==='IFBA'&&r.semestre===sem).map(r=>r.disciplina))].forEach(disc => {
+      const rows = db.notas.filter(r=>r.inst==='IFBA'&&r.semestre===sem&&r.disciplina===disc);
+      allIFBA.push({ sem, disc, calc: calcIFBA(rows) });
     });
   });
 
   db.config.saga_materias.forEach(ms => {
-    const [mod,,nome] = ms.split('|');
-    const rows = db.notas.filter(r => r.inst==='SAGA' && r.semestre===mod && r.disciplina===nome);
-    all.push({ inst:'SAGA', sem:mod, disc:nome, calc: calcSAGA(rows) });
+    const [mod, track, nome] = ms.split('|');
+    const rows = db.notas.filter(r=>r.inst==='SAGA'&&r.semestre===mod&&r.disciplina===nome);
+    allSAGA.push({ track, disc:nome, calc: calcSAGA(rows) });
   });
 
-  const aprovadas = all.filter(d => ['APROVADO','APROVADO NA FINAL'].includes(d.calc.status)).length;
-  const cursando  = all.filter(d => d.calc.status==='CURSANDO').length;
-  const emFinal   = all.filter(d => d.calc.status==='EM FINAL').length;
-  const reprovado = all.filter(d => d.calc.status==='REPROVADO').length;
+  function statBlock(arr, cor, label) {
+    const aprov   = arr.filter(d=>['APROVADO','APROVADO NA FINAL'].includes(d.calc.status)).length;
+    const cursando = arr.filter(d=>d.calc.status==='CURSANDO').length;
+    const emFinal = arr.filter(d=>d.calc.status==='EM FINAL').length;
+    const reprov  = arr.filter(d=>d.calc.status==='REPROVADO').length;
+    const total   = arr.length;
+    const pct     = total ? Math.round(aprov/total*100) : 0;
+    const medias  = arr.filter(d=>(d.calc.mediaFinal??d.calc.media)!==null).map(d=>d.calc.mediaFinal??d.calc.media);
+    const media   = medias.length ? medias.reduce((a,b)=>a+b,0)/medias.length : null;
+    const mc      = media===null?'var(--muted)':media>=7?cor:media>=5?'var(--warn)':'var(--danger)';
 
-  const avgOf = arr => arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null;
-  const mediaGeral = avgOf(all.filter(d=>d.calc.mediaFinal!==null).map(d=>d.calc.mediaFinal??d.calc.media));
-  const mediaIFBA  = avgOf(all.filter(d=>d.inst==='IFBA'&&d.calc.mediaFinal!==null).map(d=>d.calc.mediaFinal));
-  const mediaSAGA  = avgOf(all.filter(d=>d.inst==='SAGA'&&d.calc.media!==null).map(d=>d.calc.media));
-
-  // Progresso geral
-  const total = all.length;
-  const pctAprovadas = total ? Math.round(aprovadas/total*100) : 0;
-
-  let html = `<div class="ov-grid">
-    <div class="stat-card">
-      <div class="stat-label">Média Geral</div>
-      <div class="score-big ${scoreColor(mediaGeral)}" style="font-size:2.4rem;">${fmt(mediaGeral)}</div>
-      <div style="color:var(--muted);font-size:0.68rem;margin-top:4px;">${total} disciplinas</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Média IFBA</div>
-      <div class="score-big" style="font-size:2.4rem;color:var(--ifba);">${fmt(mediaIFBA)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Média SAGA</div>
-      <div class="score-big" style="font-size:2.4rem;color:var(--saga);">${fmt(mediaSAGA)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Aprovadas</div>
-      <div class="score-big green" style="font-size:2.4rem;">${aprovadas}</div>
-      <div style="color:var(--muted);font-size:0.68rem;margin-top:4px;">de ${total}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Cursando</div>
-      <div class="score-big gray" style="font-size:2.4rem;">${cursando}</div>
-    </div>
-    ${emFinal   ? `<div class="stat-card"><div class="stat-label">Em Final</div><div class="score-big yellow" style="font-size:2.4rem;">${emFinal}</div></div>` : ''}
-    ${reprovado ? `<div class="stat-card"><div class="stat-label">Reprovadas</div><div class="score-big red" style="font-size:2.4rem;">${reprovado}</div></div>` : ''}
-  </div>
-
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;">Andamento do Curso</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div class="prog-wrap" style="height:10px;">
-        <div class="prog-fill" style="width:${pctAprovadas}%;background:var(--ifba);"></div>
+    return `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:${cor};">${label}</div>
+          <div style="color:var(--muted);font-size:0.7rem;margin-top:2px;">${total} disciplinas</div>
+        </div>
+        <div class="score-big" style="font-size:2.4rem;color:${mc};">${fmt(media)}</div>
       </div>
-      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--ifba);min-width:40px;">${pctAprovadas}%</span>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div class="prog-wrap" style="height:8px;">
+          <div class="prog-fill" style="width:${pct}%;background:${cor};"></div>
+        </div>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;color:${cor};min-width:36px;">${pct}%</span>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;margin-bottom:16px;">
+        <span style="color:${cor};">● ${aprov} aprovadas</span>
+        <span style="color:var(--muted);">● ${cursando} cursando</span>
+        ${emFinal ? `<span style="color:var(--warn);">● ${emFinal} em final</span>` : ''}
+        ${reprov  ? `<span style="color:var(--danger);">● ${reprov} reprovadas</span>` : ''}
+      </div>`;
+  }
+
+  function semCards(arr, cor, groupKey) {
+    const grupos = {};
+    arr.forEach(d => {
+      if (!grupos[d[groupKey]]) grupos[d[groupKey]] = [];
+      grupos[d[groupKey]].push(d);
+    });
+    let h = '';
+    Object.entries(grupos).forEach(([nome, discs]) => {
+      const medias = discs.filter(d=>(d.calc.mediaFinal??d.calc.media)!==null).map(d=>d.calc.mediaFinal??d.calc.media);
+      const med = medias.length ? medias.reduce((a,b)=>a+b,0)/medias.length : null;
+      const mc  = med===null?'var(--muted)':med>=7?cor:med>=5?'var(--warn)':'var(--danger)';
+      h += `<div style="margin-bottom:10px;background:var(--surface2);border-radius:10px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;">${nome}</span>
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:${mc};">${fmt(med)}</span>
+        </div>`;
+      discs.forEach(d => {
+        const mv = d.calc.mediaFinal ?? d.calc.media;
+        const dc = mv===null?'var(--muted)':mv>=7?cor:mv>=5?'var(--warn)':'var(--danger)';
+        h += `<div style="display:flex;justify-content:space-between;font-size:0.7rem;padding:3px 0;border-bottom:1px solid var(--border);">
+          <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">${d.disc}</span>
+          <span style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            <span style="color:${dc};font-weight:600;">${fmt(mv)}</span>
+            ${statusBadge(d.calc.status)}
+          </span>
+        </div>`;
+      });
+      h += `</div>`;
+    });
+    return h;
+  }
+
+  const ifbaUid = 'ov_ifba';
+  const sagaUid = 'ov_saga';
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">`;
+
+  // Card IFBA
+  html += `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:4px;" onclick="toggleSem('${ifbaUid}')">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.05em;color:var(--ifba);">IFBA</div>
+      <span class="chevron" id="chevron-${ifbaUid}" style="color:var(--muted);font-size:0.8rem;">▾</span>
     </div>
-    <div style="display:flex;gap:16px;font-size:0.75rem;flex-wrap:wrap;">
-      <span style="color:var(--ifba);">● ${aprovadas} aprovadas</span>
-      <span style="color:var(--muted);">● ${cursando} cursando</span>
-      ${emFinal ? `<span style="color:var(--warn);">● ${emFinal} em final</span>` : ''}
-      ${reprovado ? `<span style="color:var(--danger);">● ${reprovado} reprovadas</span>` : ''}
+    <div id="sem-body-${ifbaUid}">
+      ${statBlock(allIFBA, 'var(--ifba)', 'Instituto Federal da Bahia')}
+      ${semCards(allIFBA, 'var(--ifba)', 'sem')}
     </div>
   </div>`;
 
-  // Resumo por semestre/módulo
-  const porSem = {};
-  all.forEach(d => {
-    const key = d.inst + '|' + d.sem;
-    if (!porSem[key]) porSem[key] = { inst:d.inst, sem:d.sem, discs:[] };
-    porSem[key].discs.push(d);
-  });
+  // Card SAGA
+  html += `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:4px;" onclick="toggleSem('${sagaUid}')">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.05em;color:var(--saga);">SAGA — Art Suite</div>
+      <span class="chevron" id="chevron-${sagaUid}" style="color:var(--muted);font-size:0.8rem;">▾</span>
+    </div>
+    <div id="sem-body-${sagaUid}">
+      ${statBlock(allSAGA, 'var(--saga)', 'SAGA')}
+      ${semCards(allSAGA, 'var(--saga)', 'track')}
+    </div>
+  </div>`;
 
-  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">`;
-  Object.values(porSem).forEach(g => {
-    const medias = g.discs.filter(d=>(d.calc.mediaFinal??d.calc.media)!==null).map(d=>d.calc.mediaFinal??d.calc.media);
-    const med = medias.length ? medias.reduce((a,b)=>a+b,0)/medias.length : null;
-    const cor = g.inst==='IFBA' ? 'var(--ifba)' : 'var(--saga)';
-    html += `<div class="stat-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div>
-          <div style="font-size:0.68rem;color:${cor};font-weight:600;letter-spacing:0.05em;">${g.inst}</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;">${g.sem}</div>
-        </div>
-        <div class="score-big" style="font-size:1.6rem;color:${med===null?'var(--muted)':med>=7?cor:med>=5?'var(--warn)':'var(--danger)'};">${fmt(med)}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;">`;
-    g.discs.forEach(d => {
-      const mv = d.calc.mediaFinal ?? d.calc.media;
-      const dc = mv===null?'var(--muted)':mv>=7?'var(--ifba)':mv>=5?'var(--warn)':'var(--danger)';
-      html += `<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:3px 0;border-bottom:1px solid var(--border);">
-        <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">${d.disc}</span>
-        <span style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-          <span style="color:${dc};font-weight:600;">${fmt(mv)}</span>
-          ${statusBadge(d.calc.status)}
-        </span>
-      </div>`;
-    });
-    html += `</div></div>`;
-  });
   html += `</div>`;
 
   document.getElementById('page-overview').innerHTML = html;
@@ -813,14 +816,11 @@ function renderSAGA() {
   const el = document.getElementById('page-saga');
 
   if (db.config.saga_modulos.length === 0) {
-    el.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
-      <button class="btn btn-saga" onclick="openModal('new-mod')">+ Módulo</button></div>
-      <div style="text-align:center;padding:48px;color:var(--muted);">Nenhum módulo ainda.</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:48px;color:var(--muted);">Nenhum módulo ainda.</div>`;
     return;
   }
 
-  let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-    <button class="btn btn-saga" onclick="openModal('new-mod')">+ Módulo</button></div>`;
+  let html = '';
 
   db.config.saga_modulos.forEach((mod, mi) => {
     const materias = db.config.saga_materias.filter(m=>m.startsWith(mod+'|'))
@@ -832,23 +832,42 @@ function renderSAGA() {
       ? modCalcs.filter(c=>c.media!==null).reduce((s,c)=>s+c.media,0)/modCalcs.filter(c=>c.media!==null).length
       : null;
 
-    const modUid = `mod_${mi}`;
-    html += `<div class="sem-header" onclick="toggleSem('${modUid}')" style="cursor:pointer;">
-      <span class="chevron" id="chevron-${modUid}" style="color:var(--muted);font-size:0.8rem;transform:rotate(0deg);transition:transform 0.25s;">▾</span>
-      <h2>${mod}</h2>
-      ${modMedia!==null?`<div class="sem-avg" style="color:var(--saga);">${fmt(modMedia)}</div>`:''}
-      <div class="sem-line"></div>
-      <button class="btn btn-sm btn-saga" onclick="event.stopPropagation();openAddMat('${esc(mod)}')">+ Matéria</button>
-    </div>
-    <div id="sem-body-${modUid}">`;
+    // Art Suite é o curso — nome fixo no topo, sem colapso
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--saga);">${mod}</div>
+        <div style="color:var(--muted);font-size:0.72rem;margin-top:2px;">Curso · ${materias.length} matérias</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${modMedia!==null?`<div class="sem-avg" style="color:var(--saga);font-size:1rem;">${fmt(modMedia)}</div>`:''}
+        <button class="btn btn-sm btn-saga" onclick="openAddMat('${esc(mod)}')">+ Matéria</button>
+      </div>
+    </div>`;
 
     if (materias.length === 0) {
       html += `<div style="color:var(--muted);font-size:0.8rem;padding:12px 0;">Nenhuma matéria.</div>`;
     }
 
-    tracks.forEach(track => {
-      html += `<div class="track-label">${track}</div>`;
-      materias.filter(m=>m.track===track).forEach((mat, di) => {
+    // Tracks colapsam como semestres
+    tracks.forEach((track, ti) => {
+      const trackMats = materias.filter(m=>m.track===track);
+      const trackCalcs = trackMats.map(mat => calcSAGA(db.notas.filter(r=>r.inst==='SAGA'&&r.semestre===mod&&r.disciplina===mat.nome)));
+      const trackMedia = trackCalcs.filter(c=>c.media!==null).length
+        ? trackCalcs.filter(c=>c.media!==null).reduce((s,c)=>s+c.media,0)/trackCalcs.filter(c=>c.media!==null).length
+        : null;
+      const trackUid = `track_${mi}_${ti}`;
+      const tc = trackMedia===null?'var(--muted)':trackMedia>=7?'var(--saga)':trackMedia>=5?'var(--warn)':'var(--danger)';
+
+      html += `<div class="sem-header" onclick="toggleSem('${trackUid}')" style="cursor:pointer;">
+        <span class="chevron" id="chevron-${trackUid}" style="color:var(--muted);font-size:0.8rem;">▾</span>
+        <h2>${track}</h2>
+        ${trackMedia!==null?`<div class="sem-avg" style="color:${tc}">${fmt(trackMedia)}</div>`:''}
+        <div class="sem-line"></div>
+        <button class="btn btn-sm btn-saga" onclick="event.stopPropagation();openAddMat('${esc(mod)}')">+ Matéria</button>
+      </div>
+      <div id="sem-body-${trackUid}">`;
+
+      trackMats.forEach((mat, di) => {
         const rows = db.notas.filter(r=>r.inst==='SAGA'&&r.semestre===mod&&r.disciplina===mat.nome);
         const calc = calcSAGA(rows);
         const color = scoreColor(calc.media);
@@ -892,8 +911,9 @@ function renderSAGA() {
           </div>
           </div></div>`;
       });
+      });
+      html += `</div>`; // fecha track-body
     });
-    html += `</div>`; // fecha mod-body
   });
 
   el.innerHTML = html;

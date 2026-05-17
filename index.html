@@ -471,8 +471,11 @@ function calcIFBA(rows) {
 
   if (comNota.length === 0) return { media:null, mediaFinal:null, status:'CURSANDO', precisaFinal:null, notaFinal:null };
 
+  // Nota é obtida no peso (ex: 3.9 de 4.0, 3.3 de 6.0)
+  // Média = soma(notas obtidas) / soma(pesos) × 10
   const totalPeso = comNota.reduce((s,r) => s + r.peso, 0);
-  const media     = totalPeso === 0 ? 0 : comNota.reduce((s,r) => s + r.nota * r.peso, 0) / totalPeso;
+  const media     = totalPeso === 0 ? 0 :
+    (comNota.reduce((s,r) => s + r.nota, 0) / totalPeso) * 10;
 
   let status, mediaFinal = null, precisaFinal = null, notaFinal = null;
 

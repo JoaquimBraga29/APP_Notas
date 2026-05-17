@@ -337,11 +337,12 @@ const SENHA   = '290896';
 //  STATE
 // ════════════════════════════════════════════════════
 let db = {
-  notas:  [],   // { inst, semestre, disciplina, avaliacao, peso, nota }
+  notas:  [],
   config: {
     ifba_semestres: [],
+    ifba_discs:     [],
     saga_modulos:   [],
-    saga_materias:  []  // "modulo|track|nome"
+    saga_materias:  []
   }
 };
 let editCtx = {};
@@ -418,6 +419,7 @@ async function loadAll() {
     const rows = rNotas.values || [];
     rows.slice(1).forEach(r => {
       if (!r[0]) return;
+      if (!r[3]) return; // ignora linhas sem avaliação (estrutura vazia)
       db.notas.push({
         inst: r[0], semestre: r[1], disciplina: r[2],
         avaliacao: r[3],
@@ -427,12 +429,13 @@ async function loadAll() {
     });
 
     // Parse config
-    db.config = { ifba_semestres: [], saga_modulos: [], saga_materias: [] };
+    db.config = { ifba_semestres: [], ifba_discs: [], saga_modulos: [], saga_materias: [] };
     const cfgRows = rConfig.values || [];
     cfgRows.slice(1).forEach(r => {
       if (r[0] === 'ifba_semestre') db.config.ifba_semestres.push(r[1]);
       if (r[0] === 'saga_modulo')   db.config.saga_modulos.push(r[1]);
       if (r[0] === 'saga_materia')  db.config.saga_materias.push(r[1]);
+      if (r[0] === 'ifba_disc')     db.config.ifba_discs.push(r[1]);
     });
 
     renderAll();
@@ -692,6 +695,23 @@ function renderIFBA() {
 
     if (discNames.length === 0) {
       html += `<div style="color:var(--muted);font-size:0.8rem;padding:12px 0;">Nenhuma disciplina.</div>`;
+    }
+
+    // Disciplinas da ementa sem notas ainda
+    const discsDaEmenta = db.config.ifba_discs
+      .filter(d => d.startsWith(sem + '|'))
+      .map(d => d.split('|')[1])
+      .filter(d => !discNames.includes(d));
+
+    if (discsDaEmenta.length > 0) {
+      html += '<div style="margin-bottom:14px;">';
+      discsDaEmenta.forEach(disc => {
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;margin-bottom:6px;opacity:0.5;">'
+          + '<span style="font-size:0.82rem;">' + disc + '</span>'
+          + '<span class="badge badge-gray">A CURSAR</span>'
+          + '</div>';
+      });
+      html += '</div>';
     }
 
     discNames.forEach((disc, di) => {
